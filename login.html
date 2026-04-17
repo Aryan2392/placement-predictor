@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — Placement AI</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="auth-body">
+
+  <!-- Animated background blobs -->
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+
+  <div class="auth-wrapper">
+    <div class="auth-card">
+
+      <div class="auth-brand">
+        <div class="brand-icon">🎓</div>
+        <h1>Placement AI</h1>
+        <p>Smart Placement Intelligence System</p>
+      </div>
+
+      {% if registered %}
+        <div class="alert alert-success">
+          ✅ Account created! Please log in.
+        </div>
+      {% endif %}
+
+      {% if error %}
+        <div class="alert alert-error">⚠️ {{ error }}</div>
+      {% endif %}
+
+      <form method="POST" action="/login" class="auth-form">
+        <div class="input-group">
+          <span class="input-icon">👤</span>
+          <input type="text" name="username" placeholder="Username" required autofocus autocomplete="username">
+        </div>
+        <div class="input-group">
+          <span class="input-icon">🔒</span>
+          <input type="password" name="password" id="pwdField" placeholder="Password" required autocomplete="current-password">
+          <button type="button" class="pw-toggle" onclick="togglePwd('pwdField', this)">👁</button>
+        </div>
+        <button type="submit" class="btn-auth">Login →</button>
+      </form>
+
+      <div class="auth-footer">
+        Don't have an account? <a href="/register">Register here</a>
+      </div>
+
+      <div class="demo-hint">
+        <small>💡 New user? <a href="/register">Create a free account</a> to get started.</small>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function togglePwd(fieldId, btn) {
+      const f = document.getElementById(fieldId);
+      if (f.type === "password") { f.type = "text"; btn.textContent = "🙈"; }
+      else { f.type = "password"; btn.textContent = "👁"; }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Placement AI</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════════
+     NAVBAR
+════════════════════════════════════════════════════════════ -->
+<nav class="navbar">
+  <div class="nav-left">
+    <div class="nav-brand">🎓 Placement<span>AI</span></div>
+  </div>
+  <div class="nav-center">
+    <button class="nav-tab active" onclick="switchTab('predict',this)">🎯 Predict</button>
+    <button class="nav-tab" onclick="switchTab('resume',this)">📄 Resume</button>
+    <button class="nav-tab" onclick="switchTab('chat',this)">🤖 AI Chat</button>
+    <button class="nav-tab" onclick="switchTab('analytics',this)">📊 Analytics</button>
+    <button class="nav-tab" onclick="switchTab('history',this)">🕐 History</button>
+  </div>
+  <div class="nav-right">
+    <span class="nav-user">👤 {{ username }}</span>
+    <a href="/logout" class="btn-logout">Logout</a>
+  </div>
+</nav>
+
+<!-- Mobile tab bar -->
+<div class="mobile-tabs">
+  <button class="m-tab active" onclick="switchTab('predict',this)">🎯</button>
+  <button class="m-tab" onclick="switchTab('resume',this)">📄</button>
+  <button class="m-tab" onclick="switchTab('chat',this)">🤖</button>
+  <button class="m-tab" onclick="switchTab('analytics',this)">📊</button>
+  <button class="m-tab" onclick="switchTab('history',this)">🕐</button>
+</div>
+
+<div class="page-container">
+
+<!-- ════════════════════════════════════════════════════════════
+     TAB 1: PREDICT
+════════════════════════════════════════════════════════════ -->
+<div id="tab-predict" class="tab-content active">
+  <div class="two-col">
+
+    <!-- LEFT: Input Form -->
+    <div class="form-panel">
+      <div class="panel-header">
+        <h2>🎯 Placement Predictor</h2>
+        <p>Enter your profile details to get AI-powered prediction</p>
+      </div>
+
+      <div class="slider-field">
+        <div class="sf-label">
+          <label>CGPA</label>
+          <span class="sf-val" id="v_cgpa">7.5</span>
+        </div>
+        <input type="range" id="cgpa" min="5" max="10" step="0.1" value="7.5" oninput="syncVal('cgpa')">
+        <div class="sf-scale"><span>5.0</span><span>10.0</span></div>
+      </div>
+
+      <div class="slider-field">
+        <div class="sf-label">
+          <label>Internships</label>
+          <span class="sf-val" id="v_internships">1</span>
+        </div>
+        <input type="range" id="internships" min="0" max="5" step="1" value="1" oninput="syncVal('internships')">
+        <div class="sf-scale"><span>0</span><span>5</span></div>
+      </div>
+
+      <div class="slider-field">
+        <div class="sf-label">
+          <label>Projects</label>
+          <span class="sf-val" id="v_projects">2</span>
+        </div>
+        <input type="range" id="projects" min="0" max="8" step="1" value="2" oninput="syncVal('projects')">
+        <div class="sf-scale"><span>0</span><span>8</span></div>
+      </div>
+
+      <div class="slider-field">
+        <div class="sf-label">
+          <label>Aptitude Score</label>
+          <span class="sf-val" id="v_aptitude">65</span><span class="sf-unit">/100</span>
+        </div>
+        <input type="range" id="aptitude" min="0" max="100" step="1" value="65" oninput="syncVal('aptitude')">
+        <div class="sf-scale"><span>0</span><span>100</span></div>
+      </div>
+
+      <div class="slider-field">
+        <div class="sf-label">
+          <label>Communication Score</label>
+          <span class="sf-val" id="v_communication">65</span><span class="sf-unit">/100</span>
+        </div>
+        <input type="range" id="communication" min="0" max="100" step="1" value="65" oninput="syncVal('communication')">
+        <div class="sf-scale"><span>0</span><span>100</span></div>
+      </div>
+
+      <button id="predictBtn" class="btn-predict" onclick="submitPrediction()">
+        <span id="predictBtnText">🔮 Predict My Placement</span>
+      </button>
+    </div>
+
+    <!-- RIGHT: Results -->
+    <div class="result-panel">
+
+      <!-- Default state -->
+      <div id="defaultState" class="default-state">
+        <div class="ds-icon">🎯</div>
+        <h3>Ready to Predict</h3>
+        <p>Adjust the sliders and click <strong>Predict</strong> to get your AI-powered placement prediction with skill gap analysis and role recommendations.</p>
+        <div class="ds-features">
+          <span>✅ ML Prediction</span>
+          <span>✅ Confidence Score</span>
+          <span>✅ Skill Gap Analysis</span>
+          <span>✅ Role Recommendation</span>
+        </div>
+      </div>
+
+      <!-- Result (shown after prediction) -->
+      <div id="resultBlock" class="result-block hidden">
+
+        <div id="resultBanner" class="result-banner">
+          <div id="resultEmoji" class="res-emoji"></div>
+          <div>
+            <div id="resultText" class="res-text"></div>
+            <div id="roleText" class="res-role"></div>
+          </div>
+          <div id="confBadge" class="conf-badge"></div>
+        </div>
+
+        <!-- Confidence bar -->
+        <div class="conf-section">
+          <div class="conf-row">
+            <span>Placed</span>
+            <div class="mini-bar"><div id="placedBar" class="mini-fill placed-fill"></div></div>
+            <span id="placedPct" class="pct-lbl"></span>
+          </div>
+          <div class="conf-row">
+            <span>Not Placed</span>
+            <div class="mini-bar"><div id="notBar" class="mini-fill not-fill"></div></div>
+            <span id="notPct" class="pct-lbl"></span>
+          </div>
+        </div>
+
+        <!-- Skill Gap -->
+        <div id="skillGapSection" class="info-section">
+          <h4>🔍 Skill Gap Analysis</h4>
+          <div id="skillGapContent"></div>
+        </div>
+
+        <!-- Suggestions -->
+        <div class="info-section">
+          <h4>💡 AI Recommendations</h4>
+          <div id="suggestionsContent"></div>
+        </div>
+
+        <!-- Mini charts -->
+        <div class="mini-charts">
+          <div class="mini-chart-card">
+            <h5>Profile vs Benchmark</h5>
+            <canvas id="barChart" height="180"></canvas>
+          </div>
+          <div class="mini-chart-card">
+            <h5>Your Skill Radar</h5>
+            <canvas id="radarChart" height="180"></canvas>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     TAB 2: RESUME ANALYZER
+════════════════════════════════════════════════════════════ -->
+<div id="tab-resume" class="tab-content">
+  <div class="feature-page">
+    <div class="feature-header">
+      <h2>📄 Resume Analyzer</h2>
+      <p>Upload your resume as a .txt file to get NLP-powered analysis, skill extraction, and improvement suggestions.</p>
+    </div>
+
+    <div class="two-col">
+      <div class="form-panel">
+        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('resumeFile').click()">
+          <div class="uz-icon">📄</div>
+          <div class="uz-title">Click to upload resume</div>
+          <div class="uz-sub">Supports .txt files only | Max 2MB</div>
+          <div class="uz-hint">💡 Open your resume in Notepad → Save As → Plain Text (.txt)</div>
+        </div>
+        <input type="file" id="resumeFile" accept=".txt" style="display:none" onchange="onFileSelect(this)">
+
+        <div id="fileInfo" class="file-info hidden"></div>
+
+        <button id="analyzeBtn" class="btn-predict" onclick="uploadResume()" disabled>
+          <span>🔍 Analyze Resume</span>
+        </button>
+
+        <div class="howto-card">
+          <h4>📝 How to prepare .txt resume:</h4>
+          <ol>
+            <li>Open your Word/PDF resume</li>
+            <li>Copy all the text (Ctrl+A, Ctrl+C)</li>
+            <li>Open Notepad → Paste → Save as <code>resume.txt</code></li>
+            <li>Upload that file here</li>
+          </ol>
+        </div>
+      </div>
+
+      <div id="resumeResultPanel" class="result-panel">
+        <div class="default-state">
+          <div class="ds-icon">📄</div>
+          <h3>Resume Analysis</h3>
+          <p>Upload your resume to see skills extracted, score calculated, and personalised suggestions.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     TAB 3: AI CHATBOT
+════════════════════════════════════════════════════════════ -->
+<div id="tab-chat" class="tab-content">
+  <div class="chat-page">
+    <div class="chat-header">
+      <div class="chat-avatar">🤖</div>
+      <div>
+        <h3>Placement AI Assistant</h3>
+        <span class="online-dot"></span><small>Online — Ready to help</small>
+      </div>
+    </div>
+
+    <div id="chatMessages" class="chat-messages">
+      <div class="chat-msg bot">
+        <div class="msg-bubble">
+          👋 Hi <strong>{{ username }}</strong>! I'm your Placement AI Assistant.
+          <br><br>I can help you with preparation roadmap, DSA tips, resume advice, interview strategies, company info, salary insights, and much more!
+          <br><br>Just type your question below. 😊
+        </div>
+        <div class="msg-time">Just now</div>
+      </div>
+    </div>
+
+    <div class="quick-chips">
+      <button class="chip" onclick="sendQuick('Give me a placement roadmap')">🗺️ Roadmap</button>
+      <button class="chip" onclick="sendQuick('How to prepare for DSA?')">💻 DSA Tips</button>
+      <button class="chip" onclick="sendQuick('Resume tips for freshers')">📄 Resume Help</button>
+      <button class="chip" onclick="sendQuick('HR interview preparation')">🗣️ HR Interview</button>
+      <button class="chip" onclick="sendQuick('Which skills should I learn?')">🎓 Skills</button>
+      <button class="chip" onclick="sendQuick('How to get internship?')">🏫 Internship</button>
+    </div>
+
+    <div class="chat-input-row">
+      <input type="text" id="chatInput" placeholder="Ask anything about placement…" 
+             onkeydown="if(event.key==='Enter') sendMessage()">
+      <button onclick="sendMessage()" class="chat-send-btn">➤</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     TAB 4: ANALYTICS
+════════════════════════════════════════════════════════════ -->
+<div id="tab-analytics" class="tab-content">
+  <div class="feature-page">
+    <div class="feature-header">
+      <h2>📊 Analytics Dashboard</h2>
+      <p>System-wide placement insights powered by all prediction data.</p>
+    </div>
+
+    <!-- Stat cards -->
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card loading-card"><div class="sk-box"></div></div>
+      <div class="stat-card loading-card"><div class="sk-box"></div></div>
+      <div class="stat-card loading-card"><div class="sk-box"></div></div>
+      <div class="stat-card loading-card"><div class="sk-box"></div></div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-grid">
+      <div class="chart-card">
+        <h3>Overall Placement Ratio</h3>
+        <canvas id="pieChart" height="260"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>Average Scores</h3>
+        <canvas id="avgChart" height="260"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     TAB 5: HISTORY
+════════════════════════════════════════════════════════════ -->
+<div id="tab-history" class="tab-content">
+  <div class="feature-page">
+    <div class="feature-header">
+      <h2>🕐 Prediction History</h2>
+      <p>Your last 15 predictions with full details.</p>
+      <button class="btn-refresh" onclick="loadHistory()">🔄 Refresh</button>
+    </div>
+
+    <div id="historyContainer">
+      <div class="loading-msg">Loading history…</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /page-container -->
+
+<script src="/static/script.js"></script>
+</body>
+</html>
